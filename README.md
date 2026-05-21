@@ -117,6 +117,7 @@ If `--output` is provided, that path is used instead of the default generated na
 - `--marker`: optional string appended to the generated output filename after the model name
 - `--formatting {wrap,dot}`: transcript output style, default `dot`
 - `--device {auto,cpu,cuda,dml}`: execution backend, default `auto`
+- `--transcribe-option {default,tradeoff,static}`: selection of transcribing options set
 
 ## Formatting Modes
 
