@@ -188,7 +188,7 @@ echo = transcribeOption: %srcFile%
 
 set model=small
 echo = model: %model%
-set opts=--model %model% --device %dev% --marker %dev%-tc1 --formatting dot %trxOpt%
+set opts=--model %model% --device %dev% %trxOpt% --formatting dot 
 set msg="%DATE%,%TIME% Test cases with [%model%] model"
 echo "----------------------------------------------------------"
 echo "--- %msg% "
@@ -199,7 +199,7 @@ python transcribe_mp3.py %srcFile% %opts% --marker %dev%-tc3
 
 set model=medium
 echo = model: %model%
-set opts=--model %model% --device %dev% --formatting dot --transcribe-option static
+set opts=--model %model% --device %dev% %trxOpt% --formatting dot 
 set msg="%DATE%,%TIME% Test cases with [%model%] model"
 echo "----------------------------------------------------------"
 echo "--- %msg% "
@@ -210,7 +210,7 @@ python transcribe_mp3.py %srcFile% %opts% --marker %dev%-tc3
 
 set model=large
 echo = model: %model%
-set opts=--model %model% --device %dev% --marker %dev%-tc1 --formatting dot --transcribe-option static
+set opts=--model %model% --device %dev% %trxOpt% --formatting dot 
 set msg="%DATE%,%TIME% Test cases with [%model%] model"
 echo "----------------------------------------------------------"
 echo "--- %msg% "
