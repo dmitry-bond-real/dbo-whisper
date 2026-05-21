@@ -1,20 +1,22 @@
 # MP3 Transcriber
 
-The purpose: **I have a tons of `*.MP3` files produced by `Desktop Call Recoder`**. 
+The purpose: **I have tons of `*.MP3` files produced by `Desktop Call Recoder`**. 
 Most of them are recording of our standup meetings. 
 Some - calls with customers.
 Some - calls with coleagues.
 **The problem - I remember *we discussed something*, but with the time passed 
-it because hard to remember - when we discussed that and what was decision**.
+it became hard to remember - when we discussed that and what was decision**.
 So, by this app I'm just trying to transcribe all my meeting records 
-with idea to pass them though the AI.
+with idea to pass them though the AI to generate a summary.
+
+Maybe later I will put it into a *RAG* for local LLM to make it queryable/searchable.
 
 **Also a problem** - in most cases I run it on my main PC (with NVIDIA video card). 
 But sometimes I have to run it on corporate laptop with integrated AMD video card.
 That is why need to support - all possible runtime options: *CUDA, DirectML, CPU*.
 
-Thus, this is...
-  Python CLI app that transcribes an MP3 file with OpenAI Whisper and writes a TXT file containing MP3 metadata plus the transcript.
+Thus, it is...
+  a Python CLI app that transcribes an MP3 file with OpenAI Whisper and writes a TXT file containing MP3 metadata plus the transcript.
 
 The output file currently includes:
 
