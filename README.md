@@ -4,14 +4,17 @@ The purpose: **I have a tons of `*.MP3` files produced by `Desktop Call Recoder`
 Most of them are recording of our standup meetings. 
 Some - calls with customers.
 Some - calls with coleagues.
-**The problem - I remember *we discussed something*, but have no idea - when and what was decision**.
-So, by this app I'm just trying to transcribe all my meeting records.
+**The problem - I remember *we discussed something*, but with the time passed 
+it because hard to remember - when we discussed that and what was decision**.
+So, by this app I'm just trying to transcribe all my meeting records 
+with idea to pass them though the AI.
 
-**Also a problem** - in most cases I run it on my main PC (with NVIDIA). 
+**Also a problem** - in most cases I run it on my main PC (with NVIDIA video card). 
 But sometimes I have to run it on corporate laptop with integrated AMD video card.
-That is why need to support - all possible start options: *CUDA, DirectML, CPU*.
+That is why need to support - all possible runtime options: *CUDA, DirectML, CPU*.
 
-Python CLI app that transcribes an MP3 file with OpenAI Whisper and writes a TXT file containing MP3 metadata plus the transcript.
+Thus, this is...
+  Python CLI app that transcribes an MP3 file with OpenAI Whisper and writes a TXT file containing MP3 metadata plus the transcript.
 
 The output file currently includes:
 
@@ -188,7 +191,7 @@ echo = transcribeOption: %srcFile%
 
 set model=small
 echo = model: %model%
-set opts=--model %model% --device %dev% %trxOpt% --formatting dot 
+set opts=--model %model% --device %dev% --marker %dev%-tc1 --formatting dot %trxOpt%
 set msg="%DATE%,%TIME% Test cases with [%model%] model"
 echo "----------------------------------------------------------"
 echo "--- %msg% "
@@ -199,7 +202,7 @@ python transcribe_mp3.py %srcFile% %opts% --marker %dev%-tc3
 
 set model=medium
 echo = model: %model%
-set opts=--model %model% --device %dev% %trxOpt% --formatting dot 
+set opts=--model %model% --device %dev% --formatting dot --transcribe-option static
 set msg="%DATE%,%TIME% Test cases with [%model%] model"
 echo "----------------------------------------------------------"
 echo "--- %msg% "
@@ -210,7 +213,7 @@ python transcribe_mp3.py %srcFile% %opts% --marker %dev%-tc3
 
 set model=large
 echo = model: %model%
-set opts=--model %model% --device %dev% %trxOpt% --formatting dot 
+set opts=--model %model% --device %dev% --marker %dev%-tc1 --formatting dot --transcribe-option static
 set msg="%DATE%,%TIME% Test cases with [%model%] model"
 echo "----------------------------------------------------------"
 echo "--- %msg% "
@@ -220,4 +223,31 @@ python transcribe_mp3.py %srcFile% %opts% --marker %dev%-tc2
 python transcribe_mp3.py %srcFile% %opts% --marker %dev%-tc3
 
 title "%DATE%,%TIME% COMPLETED"
+```
+
+This script producing files like these:
+- 2026_01_20 06-30-34.large.cuda-tc1.txt
+- 2026_01_20 06-30-34.medium.cuda-tc2.txt
+- 2026_01_20 06-30-34.small.cuda-tc3.txt
+
+Thus, I can compare different iterations of transcribing process.
+
+
+Example of header in each file:
+```
+album: Desktop call recorder | Microsoft Teams
+title: MrhOp Daily Stand Up | Microsoft Teams
+recorded_at: 2026-01-20 06:30:34
+duration: 00:34:43
+transcribing_device: cuda:0 (NVIDIA GeForce RTX 3060)
+transcribed_at: 2026-05-21T17:34:52.013624+03:00 using model: large
+formatting: dot
+transcribe_option: static
+
+Good morning everyone.
+Good morning.
+Good morning everyone.
+Hi everyone, good morning.
+Hi team, good morning.
+[...]
 ```
