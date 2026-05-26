@@ -1,4 +1,4 @@
-# MP3 Transcriber
+# Media Transcriber
 
 The purpose: **I have tons of `*.MP3` files produced by `Desktop Call Recoder`**. 
 Most of them are recording of our standup meetings. 
@@ -16,7 +16,7 @@ But sometimes I have to run it on corporate laptop with integrated AMD video car
 That is why need to support - all possible runtime options: *CUDA, DirectML, CPU*.
 
 Thus, it is...
-  a Python CLI app that transcribes an MP3 file with OpenAI Whisper and writes a TXT file containing MP3 metadata plus the transcript.
+  a Python CLI app that transcribes a media file with OpenAI Whisper and writes a TXT file containing source metadata plus the transcript.
 
 The output file currently includes:
 
@@ -94,7 +94,7 @@ Expected check:
 Basic usage:
 
 ```powershell
-python .\transcribe_mp3.py "path\to\audio.mp3"
+python .\transcribe_mp3.py "path\to\media.mp4"
 ```
 
 Default output filename:
@@ -113,13 +113,20 @@ If `--output` is provided, that path is used instead of the default generated na
 
 ## CLI Options
 
-- `mp3_file`: input MP3 path
+- `media_file`: input media path
 - `--model`: Whisper model name, default `base`
 - `--output`: explicit output TXT path
 - `--marker`: optional string appended to the generated output filename after the model name
 - `--formatting {wrap,dot}`: transcript output style, default `dot`
 - `--device {auto,cpu,cuda,dml}`: execution backend, default `auto`
+- `--language`: optional Whisper language code such as `ru`; when omitted, Whisper auto-detects the language
 - `--transcribe-option {default,tradeoff,static}`: selection of transcribing options set
+
+## Metadata Rules
+
+- For `.mp3` input, the script reads `album`, `title`, and recording timestamp from MP3 tags when available.
+- For non-MP3 input, `title` is taken from the file name and `album` from the parent folder name.
+- If a media file exposes duration through `mutagen`, that duration is written to the output header.
 
 ## Formatting Modes
 
@@ -153,10 +160,22 @@ Wrapped transcript with marker:
 python .\transcribe_mp3.py "v00\2026\2026_01_20 06-30-34.mp3" --model small --marker tc1 --formatting wrap
 ```
 
+Russian transcription with explicit language:
+
+```powershell
+python .\transcribe_mp3.py "v00\2026\2026_01_20 06-30-34.mp3" --model small --language ru
+```
+
 Dot-formatted transcript:
 
 ```powershell
 python .\transcribe_mp3.py "v00\2026\2026_01_20 06-30-34.mp3" --model small --formatting dot
+```
+
+MP4 input:
+
+```powershell
+python .\transcribe_mp3.py "v00\2026\2026_05_20 12-30-36.mp4" --model small
 ```
 
 ## Notes
@@ -237,7 +256,7 @@ Thus, I can compare different iterations of transcribing process.
 
 
 Example of header in each file:
-```
+```text
 album: Desktop call recorder | Microsoft Teams
 title: MrhOp Daily Stand Up | Microsoft Teams
 recorded_at: 2026-01-20 06:30:34
@@ -254,3 +273,22 @@ Hi everyone, good morning.
 Hi team, good morning.
 [...]
 ```
+
+
+# Performance Tests
+
+|audio sample duration|CUDA, sec|CPU(cuda), sec|rate|CUDA to DML rate|DML, sec|CPU(dml), sec|rate|
+|---|---|---|---|---|---|---|---|
+|00:03:13|5,22|36,15|6,9|2,9|14,99|35,28|2,4|
+| |4,83|36,35|7,5|2,7|12,96|35,73|2,8|
+| |5,18|36,36|7,0|2,5|13,12|35,89|2,7|
+|00:21:16|86,45|407,39|4,7|2,0|176,96|428,52|2,4|
+| |84,92|414,55|4,9|2,1|177,88|445,72|2,5|
+| |83,46|393,43|4,7|2,2|180,51|385,43|2,1|
+|00:41:16|196,93|817,21|4,1|2,0|396,24|914,85|2,3|
+| |194,84|827,54|4,2|2,0|387,14|920,68|2,4|
+| |199,44|1042,97|5,2|2,0|390,88|917,93|2,3|
+|test duration, sec|861,3|4012,0|5,5|2,0|1750,7 |4 120,0 |2,4|
+|test duration, min|14,4|66,9|4,7|2,0|29,2|68,7|2,4|
+
+

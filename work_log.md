@@ -108,6 +108,55 @@ The main reasons are:
 ```
 
 
+## openai-whisper supported models
+
+https://openwhispr.com/models
+
+- **Tiny** (tiny, tiny.en): 39M parameters | ~1 GB VRAM. Fastest speed (approx. 10x relative speed), best for basic applications where hardware is highly constrained.
+- **Base** (base, base.en): 74M parameters | ~1 GB VRAM. Good balance of speed and everyday accuracy.
+- **Small** (small, small.en): 244M parameters | ~2 GB VRAM. Highly recommended for capturing varied accents with solid accuracy.
+- **Medium** (medium, medium.en): 769M parameters | ~5 GB VRAM. Provides high accuracy for complex vocabulary and background noise.
+- **Large** (large, large-v2, large-v3): 1,550M parameters | ~10 GB VRAM. The most accurate models available in the open-source repository.
+- **Turbo** (large-v3-turbo):  809M parameters | ~6 GB VRAM. An optimized version of the large model that transcribes up to 8x faster with only minimal loss in accuracy.
+
+
+## Script for recognizing
+
+```
+role: PowerShell expert
+example:
+  $opts=--model medium --device cuda --formatting dot --transcribe-option static 
+  python transcribe_mp3.py $srcFile $opts
+
+task:
+  write a script to activate Python env.
+  then compile transcribe_mp3.py python script.
+  then call command as in example to generate transcibed text.
+  such call should repeated N times for array of filenames.
+  array of filenames should be defined in code as constant.
+  save result as `transcribe.ps1`
+```
+
+## почему transcribe_mp3.py сгенерировал текст на английском, хотя аудиозапись на русском
+
+
+## переделать скрипт чтобы он транскрибировал все *.mp3 файлы в указанной папке
+
+нужно переделать скрипт чтобы он транскрибировал все *.mp3 файлы в указанной папке.
+Но нужно проверять - может быть для mp3-файла уже есть результат странскрибирования и только переходить к следующему
+
+
+## Будет ли это приложение так же работать с MP4 файлами ?
+
+```
+role: Python expert
+task: 
+  переделай приложение, чтобы можно было передать любой медиа-файл.
+  Но только для MP3 файла - чтобы оно читало тэги.
+  Для прочих форматов - использовать имя файла как title, имя папки как album.
+  Если возможно извлечь длительность записи из файла - использовать ее.
+```
+
 
 # System Info
 
@@ -141,12 +190,12 @@ Created sym-link to folder with meeting recordings...
 > 
 > py -3.12 -m py_compile transcribe_mp3.py
 > 
-> python transcribe_mp3.py "v00\2026\2026_01_20 06-00-31:.mp3" --model small
-> python transcribe_mp3.py "v00\2026\2026_01_20 06-00-31:.mp3" --model small --device cpu
-> python transcribe_mp3.py "v00\2026\2026_01_20 06-00-31:.mp3" --model small --device dml
+> python transcribe_mp3.py "v00\2026\2026_01_20 06-00-31.mp3" --model small
+> python transcribe_mp3.py "v00\2026\2026_01_20 06-00-31.mp3" --model small --device cpu
+> python transcribe_mp3.py "v00\2026\2026_01_20 06-00-31.mp3" --model small --device dml
 
 **Note**:
-- whisper models cache = C:\Users\%UserName%\.cache\whisper\large-v3.pt
+- whisper models cache = `C:\Users\%UserName%\.cache\whisper\large-v3.pt`
 
 > python transcribe_mp3.py "C:\Users\%UserName%\AppData\Roaming\Desktop call recorder\Recordings\Desktop call recordings\2026_05_20 07-00-54.mp3" 
 > python transcribe_mp3.py "C:\Users\%UserName%\AppData\Roaming\Desktop call recorder\Recordings\Desktop call recordings\2026_05_20 07-00-54.mp3" --model large
@@ -156,7 +205,7 @@ Created sym-link to folder with meeting recordings...
 
 ## small files for test cases
 
-> py -3.12 transcribe_mp3.py "v00\2026_01_20 06-00-31:.mp3" --model medium 
+> py -3.12 transcribe_mp3.py "v00\2026_01_20 06-00-31.mp3" --model medium 
 
 
 
@@ -197,30 +246,30 @@ Transcription time: 1811.61 seconds
 also..
 ```
 [...]
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.large.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.large.txt
 Device used: cuda:0 (NVIDIA GeForce RTX 3060)
 Transcription time: 765.81 seconds
 [...]
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.small.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.small.txt
 Device used: cuda:0 (NVIDIA GeForce RTX 3060)
 Transcription time: 213.99 seconds
 [...]
 Transcription finished at: 2026-05-21T11:14:13.810561+03:00
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.small.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.small.txt
 Device used: cpu
 Transcription time: 526.59 seconds
 [...]
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.small.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.small.txt
 Device used: dml (privateuseone:0)
 Transcription time: 456.01 seconds
 ```
 
 also...
 ```
-(.venv) PS Y:\projects\python\whisper> python transcribe_mp3.py "v00\2026\2026_01_20 06-00-31:.mp3" --model small --device dml
+(.venv) PS Y:\projects\python\whisper> python transcribe_mp3.py "v00\2026\2026_01_20 06-00-31.mp3" --model small --device dml
 Error during transcription: DirectML was requested, but torch-directml is not installed. Run: python -m pip install torch-directml
 [...]
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.medium.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.medium.txt
 Device used: dml (privateuseone:0)
 Transcription time: 377.61 seconds
 [...]
@@ -232,26 +281,28 @@ Transcription time: 87.84 seconds
 
 # Test Results
 
-## Default Temperature (random)
+## transcribe-option = **default** (default whisper behaviour)
+
+Default Temperature (random)
 
 ### Device used: cuda:0 (NVIDIA GeForce RTX 3060)
 
 #### Model: SMALL
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.small.cuda-tc1.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.small.cuda-tc1.txt
 - Transcription time: 107.60 seconds
 - Transcription time: 109.32 seconds
 - Transcription time: 111.07 seconds
 average = 109
 
 #### Model: MEDIUM
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.medium.cuda-tc1.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.medium.cuda-tc1.txt
 - Transcription time: 302.15 seconds
 - Transcription time: 339.49 seconds
 - Transcription time: 254.59 seconds
 average = 298
 
 #### Model: LARGE
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.large.cuda-tc1.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.large.cuda-tc1.txt
 - Transcription time: 702.80 seconds
 - Transcription time: 560.42 seconds
 - Transcription time: 626.91 seconds
@@ -261,13 +312,13 @@ average = 629
 ### Device: dml (privateuseone:0)
 
 #### Model: SMALL
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.small.dml-tc1.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.small.dml-tc1.txt
 - Transcription time: 205.04 seconds
 - Transcription time: 415.63 seconds
 - Transcription time: 42.13 seconds  <- failure, just empty file!
 
 #### Model: MEDIUM
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.large.cuda-tc1.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.large.cuda-tc1.txt
 - Transcription time: 520.44 seconds
 - Transcription time: 531.13 seconds
 
@@ -277,17 +328,17 @@ Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.large.cuda-t
 #### Model: LARGE
 
 
-## Temperature = 0 (maximum deterministic)
+## transcribe-option = **static** (maximum deterministic)
 
 ### Device used: cuda:0 (NVIDIA GeForce RTX 3060)
 
 #### Model: SMALL
 
-GPU Memory usage: ~4316 MB
-GPU Load: ~20%
+GPU Memory usage: ~4600 MB
+GPU Load: ~20-30%
 GPU temperature: avg=55^C / hotSpot=70^C
 
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.small.cuda-tc1.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.small.cuda-tc1.txt
 - Transcription time: 306.83 seconds
 - Transcription time: 197.18 seconds
 - Transcription time: 175.68 seconds
@@ -296,7 +347,7 @@ Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.small.cuda-t
 
 
 #### Model: MEDIUM
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.medium.cuda-tc1.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.medium.cuda-tc1.txt
 - Transcription time: 176.61 seconds
 - Transcription time: 172.82 seconds
 - Transcription time: 175.68 seconds
@@ -305,12 +356,74 @@ Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.medium.cuda-
 
 
 #### Model: LARGE
-Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31:.large.cuda-tc1.txt
+Transcript saved to: Y:\Bz\MrhOp\meetings\2026\2026_01_20 06-00-31.large.cuda-tc1.txt
 - Transcription time: 520.44 seconds
 - Transcription time: 531.13 seconds
 - Transcription time: 1086.19 seconds
 
 (result stable by very bad - after ~60 phrases transcriber fall into weird cycle)
+
+
+#### Model: TURBO
+Transcript saved to: W:\BY\MerchOps\meetings\2026\2026_01_20 06-30-34.turbo.cuda-tc1.txt
+- Transcription time: 89.21 seconds
+- Transcription time: 83.26 seconds
+- Transcription time: 87.08 seconds
+
+(result stable by very bad - lot of text loops, lost text)
+
+
+## transcribe-option = **tradeoff** (balanced)
+
+### Device used: cuda:0 (NVIDIA GeForce RTX 3060)
+
+#### Model: SMALL
+
+GPU Memory usage: ~4300-5200 MB
+GPU Load: ~30-70%
+GPU temperature: avg=55^C / hotSpot=70^C
+Power: board=75-130W / GPU=45-85W / TDP=50%
+
+Transcript saved to: W:\BY\MerchOps\meetings\2026\2026_01_20 06-30-34.small.cuda-tc1.txt
+- Transcription time: 883.58 seconds <- there is trash in output!
+- Transcription time: 250.32 seconds <- a bit better but still trash
+- Transcription time: 558.86 seconds <- a bit better but still trash
+
+Problems: 
+- text has no any periods. So, it does not recognize phrases
+- lot of trash in text, about 30-40% at begining filled with some padding char
+- lot of repeating words in text
+
+#### Model: MEDIUM
+
+GPU Memory usage: ~8200 MB
+GPU Load: ~50-60%
+GPU temperature: avg=60^C / hotSpot=80^C
+Power: board=~100W / GPU=55-70W / TDP=60-70%
+
+Transcript saved to: W:\BY\MerchOps\meetings\2026\2026_01_20 06-30-34.medium.cuda-tc1.txt
+- Transcription time: 343.86 seconds <- better than `small` model but text has loops !
+- Transcription time: 427.29 seconds <- better than `small` model but text has loops !
+- Transcription time: 916.99 seconds <- almost good but contains text loops
+
+
+#### Model: LARGE
+
+GPU Memory usage: ~11800 MB
+GPU Load: ~70-80%
+GPU temperature: avg=70^C / hotSpot=80^C
+Power: board=~100-120W / GPU=60-80W / TDP=65-80%
+
+Transcript saved to: W:\BY\MerchOps\meetings\2026\2026_01_20 06-30-34.large.cuda-tc1.txt
+- Transcription time: 2723.75 seconds < endless loop of 1st phrase!
+- (aborted)
+
+
+#### Model: TURBO
+Transcript saved to: W:\BY\MerchOps\meetings\2026\2026_01_20 06-30-34.turbo.cuda-tc1.txt
+- Transcription time: 462.99 seconds <- better than `small` but lot of text loops!
+- Transcription time: 244.01 seconds <- better than `small` but lot of text loops!
+- Transcription time: 339.60 seconds <- better than `small` but lot of text loops!
 
 
 

@@ -25,9 +25,9 @@ def get_torch_directml() -> Any | None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Transcribe an MP3 file and save transcript as a TXT file with the same base name."
+        description="Transcribe a media file and save transcript as a TXT file with the same base name."
     )
-    parser.add_argument("mp3_file", help="Path to the MP3 file to transcribe")
+    parser.add_argument("media_file", help="Path to the media file to transcribe")
     parser.add_argument(
         "--model",
         default="base",
@@ -54,10 +54,19 @@ def parse_args() -> argparse.Namespace:
         help="Execution device. Defaults to auto, which prefers CUDA, then DirectML, then CPU.",
     )
     parser.add_argument(
+        "--language",
+        help="Optional language code for transcription, for example 'ru'. If omitted, Whisper auto-detects the language.",
+    )
+    parser.add_argument(
         "--transcribe-option",
         choices=("default", "static", "tradeoff"),
         default="tradeoff",
         help="Choose the transcription option preset: Whisper defaults, deterministic static decoding, or the current tradeoff profile.",
+    )
+    parser.add_argument(
+        "--no-condition-on-previous-text",
+        action="store_true",
+        help="Do not condition each segment on previously decoded text. This can reduce repeated phrases.",
     )
     return parser.parse_args()
 
@@ -128,10 +137,7 @@ def read_mp3_tags(input_path: Path) -> tuple[str, str]:
     return album, title
 
 
-def read_mp3_recording_info(input_path: Path) -> tuple[str, str]:
-    recorded_at = ""
-    duration = ""
-
+def read_mp3_recorded_at(input_path: Path) -> str:
     try:
         id3_tags = ID3(str(input_path))
         for frame_name in ("TDTG", "TDRC", "TDRL", "TDEN", "TDOR"):
@@ -139,9 +145,15 @@ def read_mp3_recording_info(input_path: Path) -> tuple[str, str]:
             if frame and frame.text:
                 recorded_at = str(frame.text[0]).strip()
                 if recorded_at:
-                    break
+                    return recorded_at
     except (ID3NoHeaderError, MutagenError, OSError):
-        recorded_at = ""
+        return ""
+
+    return ""
+
+
+def read_media_duration(input_path: Path) -> str:
+    duration = ""
 
     try:
         audio = MutagenFile(str(input_path))
@@ -153,7 +165,24 @@ def read_mp3_recording_info(input_path: Path) -> tuple[str, str]:
     except (MutagenError, OSError, TypeError, ValueError):
         duration = ""
 
-    return recorded_at, duration
+    return duration
+
+
+def read_media_metadata(input_path: Path) -> tuple[str, str, str, str]:
+    duration = read_media_duration(input_path)
+
+    if input_path.suffix.lower() == ".mp3":
+        album, title = read_mp3_tags(input_path)
+        recorded_at = read_mp3_recorded_at(input_path)
+
+        if not album:
+            album = input_path.parent.name
+        if not title:
+            title = input_path.stem
+
+        return album, title, recorded_at, duration
+
+    return input_path.parent.name, input_path.stem, "", duration
 
 
 def format_transcript_text(transcript: str, formatting: str, width: int = 75) -> str:
@@ -170,19 +199,19 @@ def format_transcript_text(transcript: str, formatting: str, width: int = 75) ->
 def build_transcribe_options(variant: str) -> dict[str, Any]:
     if variant == "default":
         return {
-            "word_timestamps": True,
+            "word_timestamps": False,
         }
 
     if variant == "static":
         return {
-            "word_timestamps": True,
+            "word_timestamps": False,
             "temperature": 0.0,
             "best_of": 1,
             "beam_size": 1,
         }
 
     return {
-        "word_timestamps": True,
+        "word_timestamps": False,
         "temperature": (0.0, 0.2, 0.4),
         "beam_size": 5,
         "best_of": 5,
@@ -197,13 +226,9 @@ def print_trailing_blank_lines() -> None:
 def main() -> int:
     args = parse_args()
 
-    input_path = Path(args.mp3_file).expanduser().resolve()
+    input_path = Path(args.media_file).expanduser().resolve()
     if not input_path.exists():
         print(f"Error: File not found: {input_path}")
-        return 1
-
-    if input_path.suffix.lower() != ".mp3":
-        print("Error: Input file must have .mp3 extension.")
         return 1
 
     output_name_parts = [input_path.stem, args.model]
@@ -217,8 +242,7 @@ def main() -> int:
     )
 
     try:
-        album, title = read_mp3_tags(input_path)
-        recorded_at, duration = read_mp3_recording_info(input_path)
+        album, title, recorded_at, duration = read_media_metadata(input_path)
         resolved_device = resolve_device(args.device)
         model = load_model(args.model, resolved_device)
         actual_device = describe_model_device(model, resolved_device)
@@ -227,6 +251,10 @@ def main() -> int:
         print(f"Actual device: {actual_device}, trns_option: {args.transcribe_option}")
 
         transcribe_options = build_transcribe_options(args.transcribe_option)
+        if args.no_condition_on_previous_text:
+            transcribe_options["condition_on_previous_text"] = False
+        if args.language:
+            transcribe_options["language"] = args.language
         if resolved_device == "dml":
             # Cross-attention timing path can be unstable on DML; disable for compatibility.
             transcribe_options["word_timestamps"] = False
@@ -235,6 +263,7 @@ def main() -> int:
         result = model.transcribe(str(input_path), **transcribe_options)
         transcription_seconds = time.perf_counter() - start_time
         transcript = result.get("text", "").strip()
+        detected_language = result.get("language", "")
         formatted_transcript = format_transcript_text(transcript, args.formatting)
 
         ts = datetime.now().astimezone().isoformat()
@@ -245,8 +274,11 @@ def main() -> int:
             f"duration: {duration}",
             f"transcribing_device: {actual_device}", 
             f"transcribed_at: {ts} using model: {args.model}", 
+            f"language: {args.language or detected_language}",
+            f"detected_language: {detected_language}",
             f"formatting: {args.formatting}",
             f"transcribe_option: {args.transcribe_option}",
+            f"condition_on_previous_text: {transcribe_options.get('condition_on_previous_text', True)}",
             "",
             formatted_transcript
             ]
